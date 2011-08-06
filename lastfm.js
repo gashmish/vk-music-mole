@@ -67,7 +67,7 @@ function getAlbumsCallback(albums)
 						getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
 						console.log("New hole is", new_hole.name); new_album_id = new_hole.id; 
 						console.log("New album is", new_album_id); isFinished = 1;});
-						putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
+						//putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
 						
 					
 						if (isFinished == 1)
@@ -150,7 +150,7 @@ function getPreferedMoleHole(new_track, cb)
 
 	/* Looking for mole holes tags. */
 	for (var i = 0; i < mole_holes.length; i++) {
-		console.log(mole_holes[i].name);
+		//console.log(mole_holes[i].name);
 		
 		mole_holes[i].artists.forEach(function(artist) {
 			current_mole = mole_holes[i];
@@ -163,13 +163,13 @@ function getPreferedMoleHole(new_track, cb)
 					// If exists
 					if(typeof(data.toptags.tag) !== 'undefined')
 					{
+						if (current_mole.tags.indexOf(data.toptags.tag[0].name) == -1)
 						current_mole.tags.push(data.toptags.tag[0].name);
-						if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) { return; }
 					}
 					else
 					{
-						current_mole.tags.push('Unsorted music');
-						if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) { return; }
+						if (current_mole.tags.indexOf('Unsorted music') == -1)
+						current_mole.tags.push('Unsorted music');	
 					}
 					
 					
@@ -193,7 +193,7 @@ function getPreferedMoleHole(new_track, cb)
 			else
 				new_track_tag = 'Unsorted music';
 
-			console.log("Tag is", new_track_tag, "for", new_track.artist);
+			//console.log("Tag is", new_track_tag, "for", new_track.artist);
 			
 			var hole_matched_count = 0;
 			var hole_matched = {};
