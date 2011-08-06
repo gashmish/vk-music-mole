@@ -67,7 +67,7 @@ function getAlbumsCallback(albums)
 						getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
 						console.log("New hole is", new_hole.name); new_album_id = new_hole.id; 
 						console.log("New album is", new_album_id); isFinished = 1;});
-						putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
+						//putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
 						
 					
 						if (isFinished == 1)
@@ -163,13 +163,13 @@ function getPreferedMoleHole(new_track, cb)
 					// If exists
 					if(typeof(data.toptags.tag) !== 'undefined')
 					{
-						current_mole.tags.push(data.toptags.tag[0].name);
 						if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) { return; }
+						current_mole.tags.push(data.toptags.tag[0].name);
 					}
 					else
 					{
-						current_mole.tags.push('Unsorted music');
-						if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) { return; }
+						if (current_mole.tags.indexOf('Unsorted music') != -1) { return; }
+						current_mole.tags.push('Unsorted music');	
 					}
 					
 					
