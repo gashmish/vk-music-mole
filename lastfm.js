@@ -10,11 +10,13 @@ var user_id = 160777;
 var timeout = 300;
 var albums_data = [];
 var unsorted_tracks = [];
+var isFinished = 0;
 
 sortAudio();
 
 function getAlbumsCallback(albums)
 {
+	console.log("Starting get albums");
 	if (albums.error) {
 		console.log("audio.getAlbums error: " + albums.error.error_msg);
 		return;
@@ -30,7 +32,61 @@ function getAlbumsCallback(albums)
 		if (albums_data[album_index] === undefined) {
 			console.log("Albums fetched");
 			clearInterval(t);
+			//Continue...
+			console.log("Continue");
+			console.log("Getting unsorted audios");
 			
+			VK.Api.call('audio.get', {
+			uid: user_id,
+			test_mode: 1
+			}, function(fb) {
+				if (fb.error) {
+					console.log("audio.getAlbums(all) error: " + fb.error.error_msg);
+					return;
+				}
+
+				var album_audios = fb.response;
+				var audio_index = 0;
+				var t = setInterval(function() {
+					
+					if (album_audios[audio_index] === undefined) {
+						console.log("Audios fetched");
+						clearInterval(t);
+						var unsorted_track_index = 0;
+	
+						var t = setInterval(function() {
+						
+						isFinished = 0;
+						
+						if (unsorted_tracks[unsorted_track_index] === undefined) {
+							console.log("Tracks were sorted");
+							clearInterval(t);
+							return;
+						}
+						var new_album_id = 0;;
+						getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
+						console.log("New hole is", new_hole.name); new_album_id = new_hole.id; 
+						console.log("New album is", new_album_id); isFinished = 1;});
+						putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
+						
+					
+						if (isFinished == 1)
+							unsorted_track_index++;
+						
+						}, 300);
+						
+						return;
+					}
+				
+					if (album_audios[audio_index].album_id === undefined) {
+						var unsorted_track = {};
+						unsorted_track.artist = album_audios[audio_index].artist;
+						unsorted_track.aid = album_audios[audio_index].aid;
+						unsorted_tracks.push(unsorted_track);
+					}
+					audio_index++;
+				}, 300);		
+			});
 			return;
 		}
 		
@@ -57,6 +113,7 @@ function getAlbumsCallback(albums)
 
 function getAudioCallback(audio)
 {
+	console.log("Starting get audios in current albums");
 	if (audio.error) {
         console.log("audio.get error: " + audio.error.error_msg);
         return;
@@ -81,7 +138,6 @@ function getPreferedMoleHole(new_track, cb)
 {
 	var hole_mole_tags = [];
 	var new_track_tag = '';
-	
 /* Create a cache object */
 	var cache = new LastFMCache();
 
@@ -105,13 +161,18 @@ function getPreferedMoleHole(new_track, cb)
 				success: function(data) {					
 					
 					// If exists
-					if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) {
-						return;
-					}
 					if(typeof(data.toptags.tag) !== 'undefined')
+					{
 						current_mole.tags.push(data.toptags.tag[0].name);
+						if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) { return; }
+					}
 					else
+					{
 						current_mole.tags.push('Unsorted music');
+						if (current_mole.tags.indexOf(data.toptags.tag[0].name) != -1) { return; }
+					}
+					
+					
 				}, 
 				error: function(code, message) {
 					console.log("Error");
@@ -127,8 +188,11 @@ function getPreferedMoleHole(new_track, cb)
 		autocorrect: 1
 	}, {
 		success: function(data) {
-			new_track_tag = data.toptags.tag[0].name;
-			
+			if(typeof(data.toptags.tag) !== 'undefined')
+				new_track_tag = data.toptags.tag[0].name;
+			else
+				new_track_tag = 'Unsorted music';
+
 			console.log("Tag is", new_track_tag, "for", new_track.artist);
 			
 			var hole_matched_count = 0;
@@ -159,35 +223,13 @@ function getPreferedMoleHole(new_track, cb)
 
 function sortAudio()
 {
-	console.log('Starting...');
-	
 	setTimeout(function() {
+		console.log('Starting...');
 		VK.Api.call('audio.getAlbums', {
 			uid: user_id,
 			test_mode: 1
 		}, getAlbumsCallback);
 	}, timeout); 
-	
-	getSongsNotInAlbums();
-	
-	var unsorted_track_index = 0;
-	
-	var t = setInterval(function() {
-	
-		if (unsorted_tracks[unsorted_track_index] === undefined) {
-			console.log("Tracks were sorted");
-			clearInterval(t);
-			return;
-		}
-		var new_album_id = 0;;
-		getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
-		console.log("New hole is", new_hole.name); new_album_id = new_hole.id; });
-		//putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
-		console.log("New album is", new_album_id);
-		
-		unsorted_track_index++;
-	}, 300);
-	
 }
 
 function putNewTrackToAlbum(new_song, new_album_id)
@@ -196,44 +238,11 @@ function putNewTrackToAlbum(new_song, new_album_id)
     aids: new_song,
 	album_id: new_album_id,
 	test_mode: 1
-
 	}, function(err) {
 		if (err.error) {
 			console.log("audio.moveToAlbum error: " + err.error.error_msg);
 			return;
 		}
 		console.log(err.response);
-});
-}
-
-function getSongsNotInAlbums()
-{
-		VK.Api.call('audio.get', {
-			uid: user_id,
-			test_mode: 1
-			}, function(fb) {
-				if (fb.error) {
-					console.log("audio.getAlbums(all) error: " + fb.error.error_msg);
-					return;
-				}
-
-				var album_audios = fb.response;
-				var audio_index = 0;
-				var t = setInterval(function() {
-				
-					if (album_audios[audio_index] === undefined) {
-						console.log("Audios fetched");
-						clearInterval(t);
-						return;
-					}
-				
-					if (album_audios[audio_index].album_id === undefined) {
-						var unsorted_track = {};
-						unsorted_track.artist = album_audios[audio_index].artist;
-						unsorted_track.aid = album_audios[audio_index].aid;
-						unsorted_tracks.push(unsorted_track);
-					}
-					audio_index++;
-				}, 300);		
-			});
+	});
 }
