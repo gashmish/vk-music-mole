@@ -63,7 +63,8 @@ function getAlbumsCallback(albums)
 							clearInterval(t);
 							return;
 						}
-						var new_album_id = 0;;
+						var new_album_id = 0;
+						getMoleHoles();
 						getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
 						console.log("New hole is", new_hole.name); new_album_id = new_hole.id; 
 						console.log("New album is", new_album_id); isFinished = 1;});
@@ -136,8 +137,60 @@ function getAudioCallback(audio)
 
 function getPreferedMoleHole(new_track, cb)
 {
-	var hole_mole_tags = [];
+	console.log('Getting prefered mole hole');
 	var new_track_tag = '';
+/* Create a cache object */
+	var cache = new LastFMCache();
+
+	/* Create a LastFM object */
+	var lastfm = new LastFM({
+		apiKey    : '92e516231d0d7a0aa55790b8c2039830',
+		apiSecret : 'c5661bb7c32ebea64395bd74fc41c795',
+		cache     : cache
+	});
+	
+	/* Looking for new_track tags. */
+	lastfm.artist.getTopTags({
+		artist: new_track.artist,
+		autocorrect: 1
+	}, {
+		success: function(data) {
+			if(typeof(data.toptags.tag) !== 'undefined')
+				new_track_tag = data.toptags.tag[0].name;
+			else
+				new_track_tag = 'Unsorted music';
+
+			//console.log("Tag is", new_track_tag, "for", new_track.artist);
+			
+			var hole_matched_count = 0;
+			var hole_matched = {};
+
+			/* Looking for new_track prefered mole hole. */
+			mole_holes.forEach(function(mole_hole) {
+				if (mole_hole.tags.indexOf(new_track_tag) != -1) {
+					//console.log("Tag matched " + mole_hole.name);
+					hole_matched = mole_hole;
+					hole_matched_count++;
+				}
+			});
+			
+			if (hole_matched_count > 1) {
+				// Catch it
+			} else if (hole_matched_count == 1) {
+				cb(hole_matched);
+			} else if (hole_matched_count == 0) {
+				// TODO:
+			}
+		}, 
+		error: function(code, message) {
+			//console.log("Error");
+		}
+	});
+}
+
+function getMoleHoles()
+{
+	console.log('Getting mole holes');
 /* Create a cache object */
 	var cache = new LastFMCache();
 
@@ -181,44 +234,6 @@ function getPreferedMoleHole(new_track, cb)
 		});
 
 	}
-	
-	/* Looking for new_track tags. */
-	lastfm.artist.getTopTags({
-		artist: new_track.artist,
-		autocorrect: 1
-	}, {
-		success: function(data) {
-			if(typeof(data.toptags.tag) !== 'undefined')
-				new_track_tag = data.toptags.tag[0].name;
-			else
-				new_track_tag = 'Unsorted music';
-
-			//console.log("Tag is", new_track_tag, "for", new_track.artist);
-			
-			var hole_matched_count = 0;
-			var hole_matched = {};
-
-			/* Looking for new_track prefered mole hole. */
-			mole_holes.forEach(function(mole_hole) {
-				if (mole_hole.tags.indexOf(new_track_tag) != -1) {
-					//console.log("Tag matched " + mole_hole.name);
-					hole_matched = mole_hole;
-					hole_matched_count++;
-				}
-			});
-			
-			if (hole_matched_count > 1) {
-				// Catch it
-			} else if (hole_matched_count == 1) {
-				cb(hole_matched);
-			} else if (hole_matched_count == 0) {
-				// TODO:
-			}
-		}, 
-		error: function(code, message) {
-			//console.log("Error");
-		}
-	});
 }
 
 function sortAudio()
