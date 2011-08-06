@@ -7,7 +7,7 @@ VK.Widgets.Auth("vk_auth", {
 
 var mole_holes = [];
 var user_id = 160777;
-var timeout = 300;
+var timeout = 500;
 var albums_data = [];
 var unsorted_tracks = [];
 var isFinished = 0;
@@ -18,7 +18,7 @@ function getAlbumsCallback(albums)
 {
 	console.log("Starting get albums");
 	if (albums.error) {
-		console.log("audio.getAlbums error: " + albums.error.error_msg);
+		//console.log("audio.getAlbums error: " + albums.error.error_msg);
 		return;
 	}
 	
@@ -41,7 +41,7 @@ function getAlbumsCallback(albums)
 			test_mode: 1
 			}, function(fb) {
 				if (fb.error) {
-					console.log("audio.getAlbums(all) error: " + fb.error.error_msg);
+					//console.log("audio.getAlbums(all) error: " + fb.error.error_msg);
 					return;
 				}
 
@@ -73,7 +73,7 @@ function getAlbumsCallback(albums)
 						if (isFinished == 1)
 							unsorted_track_index++;
 						
-						}, 300);
+						}, timeout);
 						
 						return;
 					}
@@ -85,7 +85,7 @@ function getAlbumsCallback(albums)
 						unsorted_tracks.push(unsorted_track);
 					}
 					audio_index++;
-				}, 300);		
+				}, timeout);		
 			});
 			return;
 		}
@@ -106,9 +106,9 @@ function getAlbumsCallback(albums)
 		}
 		
 		album_index++;
-	}, 300);
+	}, timeout);
 	
-	console.log(mole_holes);
+	//console.log(mole_holes);
 }
 
 function getAudioCallback(audio)
@@ -175,7 +175,7 @@ function getPreferedMoleHole(new_track, cb)
 					
 				}, 
 				error: function(code, message) {
-					console.log("Error");
+					//console.log("Error");
 				}
 			});
 		});
@@ -201,7 +201,7 @@ function getPreferedMoleHole(new_track, cb)
 			/* Looking for new_track prefered mole hole. */
 			mole_holes.forEach(function(mole_hole) {
 				if (mole_hole.tags.indexOf(new_track_tag) != -1) {
-					console.log("Tag matched " + mole_hole.name);
+					//console.log("Tag matched " + mole_hole.name);
 					hole_matched = mole_hole;
 					hole_matched_count++;
 				}
@@ -216,7 +216,7 @@ function getPreferedMoleHole(new_track, cb)
 			}
 		}, 
 		error: function(code, message) {
-			console.log("Error");
+			//console.log("Error");
 		}
 	});
 }
@@ -240,7 +240,7 @@ function putNewTrackToAlbum(new_song, new_album_id)
 	test_mode: 1
 	}, function(err) {
 		if (err.error) {
-			console.log("audio.moveToAlbum error: " + err.error.error_msg);
+			//console.log("audio.moveToAlbum error: " + err.error.error_msg);
 			return;
 		}
 		console.log(err.response);
