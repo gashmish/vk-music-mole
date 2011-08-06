@@ -54,13 +54,13 @@ function getAlbumsCallback(albums)
 						clearInterval(t);
 						var unsorted_track_index = 0;
 	
-						var t = setInterval(function() {
+						var k = setInterval(function() {
 						
 						isFinished = 0;
 						
 						if (unsorted_tracks[unsorted_track_index] === undefined) {
 							console.log("Tracks were sorted");
-							clearInterval(t);
+							clearInterval(k);
 							return;
 						}
 						var new_album_id = 0;
