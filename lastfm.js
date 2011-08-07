@@ -52,18 +52,7 @@ function getAlbumsCallback(albums)
 					if (album_audios[audio_index] === undefined) {
 						console.log("Audios fetched");
 						clearInterval(t);
-						var unsorted_track_index = 0;
-	
-						var k = setInterval(function() {
 						
-						isFinished = 0;
-						
-						if (unsorted_tracks[unsorted_track_index] === undefined) {
-							console.log("Tracks were sorted");
-							clearInterval(k);
-							return;
-						}
-						var new_album_id = 0;
 						console.log('Getting mole holes');
 						/* Create a cache object */
 							var cache = new LastFMCache();
@@ -75,7 +64,7 @@ function getAlbumsCallback(albums)
 								cache     : cache
 							});
 
-							/* Looking for mole holes tags. */
+							/* Looking for mole holes tags. ????*/
 							for (var i = 0; i < mole_holes.length; i++) {
 								//console.log(mole_holes[i].name);
 								var artist_index = 0;
@@ -83,6 +72,31 @@ function getAlbumsCallback(albums)
 								if (mole_holes[i].artists[artist_index] === undefined) {
 									console.log("Audios fetched");
 									clearInterval(m);
+									console.log('Mole holes were found');
+									var unsorted_track_index = 0;
+				
+									var k = setInterval(function() {
+									
+									isFinished = 0;
+									
+									if (unsorted_tracks[unsorted_track_index] === undefined) {
+										console.log("Tracks were sorted");
+										clearInterval(k);
+										return;
+									}
+									var new_album_id = 0;
+									console.log('Looking for PreferedMoleHole');
+									getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
+									console.log("New hole is", new_hole.name); new_album_id = new_hole.id; 
+									console.log("New album is", new_album_id); isFinished = 1;});
+									//putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
+									
+								
+									if (isFinished == 1)
+										unsorted_track_index++;
+									
+									}, timeout);
+									
 								}
 								
 									current_mole = mole_holes[i];
@@ -114,17 +128,6 @@ function getAlbumsCallback(albums)
 								}, timeout);
 								////
 							}
-						getPreferedMoleHole(unsorted_tracks[unsorted_track_index], function(new_hole) {
-						console.log("New hole is", new_hole.name); new_album_id = new_hole.id; 
-						console.log("New album is", new_album_id); isFinished = 1;});
-						//putNewTrackToAlbum(unsorted_tracks[unsorted_track_index].aid, new_album_id);
-						
-					
-						if (isFinished == 1)
-							unsorted_track_index++;
-						
-						}, timeout);
-						
 						return;
 					}
 				
@@ -148,11 +151,12 @@ function getAlbumsCallback(albums)
 			
 			mole_holes.push(new_mole_hole);
 			
-			VK.Api.call('audio.get', {
+				VK.Api.call('audio.get', {
 					uid: user_id,
 					album_id: albums_data[album_index].album_id,
 					test_mode: 1
 			}, getAudioCallback);
+			
 		}
 		
 		album_index++;
@@ -174,14 +178,22 @@ function getAudioCallback(audio)
 	mole_hole_last.ids = [];
 	var album_audios = audio.response;
 	
-	album_audios.forEach(function(album_audio) {
-		if (mole_hole_last.artists.indexOf(album_audio.artist) == -1)
-			mole_hole_last.artists.push(album_audio.artist);
-		if (mole_hole_last.ids.indexOf(album_audio.aid) == -1)	
-			mole_hole_last.ids.push(album_audio.aid);
-	});
-	
-	mole_holes.push(mole_hole_last);
+	var album_audio_index = 0;
+	var m = setInterval(function() {
+		if (album_audios[album_audio_index] === undefined) {
+			clearInterval(m);
+			mole_holes.push(mole_hole_last);
+			console.log(mole_hole_last.artists);
+			return;
+		}
+		
+		if (mole_hole_last.artists.indexOf(album_audios[album_audio_index].artist) == -1)
+			mole_hole_last.artists.push(album_audios[album_audio_index].artist);
+		if (mole_hole_last.ids.indexOf(album_audios[album_audio_index].aid) == -1)	
+			mole_hole_last.ids.push(album_audios[album_audio_index].aid);
+		
+	album_audio_index++;
+	}, timeout);	
 }
 
 function getPreferedMoleHole(new_track, cb)
