@@ -11,8 +11,18 @@ var timeout = 500;
 var albums_data = [];
 var unsorted_tracks = [];
 var isFinished = 0;
+var artist_index_number = 0;
 var albums_with_mole_holes_collected = 1;
 var tags_for_mole_holes_collected = 0; //at the end it should be mole_holes*artists_in_mole_hole
+/* Create a cache object */
+var cache = new LastFMCache();
+
+/* Create a LastFM object */
+var lastfm = new LastFM({
+	apiKey    : '92e516231d0d7a0aa55790b8c2039830',
+	apiSecret : 'c5661bb7c32ebea64395bd74fc41c795',
+	cache     : cache
+});
 
 sortAudio();
 
@@ -51,32 +61,32 @@ function getAlbumsCallback(albums)
 
 					var album_audios = fb.response;
 					var audio_index = 0;
-					var t = setInterval(function() {	
+					var i = setInterval(function() {	
 						if (album_audios[audio_index] === undefined) {
 							console.log("Unsorted audios were found");
-							console.log(mole_holes);
-							clearInterval(t);
+							//console.log(mole_holes);
+							clearInterval(i);
 							//return;
 							console.log('Getting mole holes');
-							/* Create a cache object */
-							var cache = new LastFMCache();
-
-							/* Create a LastFM object */
-							var lastfm = new LastFM({
-								apiKey    : '92e516231d0d7a0aa55790b8c2039830',
-								apiSecret : 'c5661bb7c32ebea64395bd74fc41c795',
-								cache     : cache
-							});
 
 							/* Looking for mole holes tags. */
 								
 							var mole_hole_index = 0;
+							//var stop = 0;
 							var r = setInterval(function() {
 								if (mole_holes[mole_hole_index] === undefined) {
+									//stop = 1;
+									console.log("mole_hole_index " + mole_hole_index);
+									console.log("artist_index_number " + artist_index_number);
+									console.log("tags_for_mole_holes_collected " + tags_for_mole_holes_collected);
 									clearInterval(r);
-									console.log('Mole holes tags were found');
-									console.log(mole_holes);
-									return;
+									if (mole_hole_index*artist_index_number == tags_for_mole_holes_collected)
+									{
+										console.log('Mole holes tags were found');
+										console.log(mole_holes);
+										return;
+									}
+									
 									//var unsorted_track_index = 0;
 					
 									//var k = setInterval(function() {
@@ -101,52 +111,59 @@ function getAlbumsCallback(albums)
 									//return;
 										
 								}
-								var artist_index = 0;
-								
-								var m = setInterval(function() {
-								if ((mole_holes[mole_hole_index] === undefined) || (mole_holes[mole_hole_index].artists[artist_index] === undefined)) {
-									clearInterval(m);
-									console.log("Tags were found for one mole");
+								// var artist_index = 0;
+								// var hole_artist_index_number = 0;
+								// var m = setInterval(function() {
+								// if ((mole_holes[mole_hole_index] === undefined) || (mole_holes[mole_hole_index].artists[artist_index] === undefined)) {
+									// clearInterval(m);
+									// //console.log("Tags were found for one mole");
 									
-								}
-								console.log(mole_hole_index);
-								console.log(artist_index);
-								current_mole = mole_holes[mole_hole_index];
-								lastfm.artist.getTopTags({
-										artist: mole_holes[mole_hole_index].artists[artist_index],
-										autocorrect: 1
-										}, {
-										success: function(data) {						
-											// If exists
-											if(data.toptags.tag === undefined)
-											{
-												if (current_mole.tags.indexOf('Unsorted music') == -1)
-												current_mole.tags.push('Unsorted music');
-												tags_for_mole_holes_collected++;
-											}
-											else
-											{
-												if(data.toptags.tag[0] === undefined)
-												{
-													if (current_mole.tags.indexOf('Unsorted music') == -1)
-													current_mole.tags.push('Unsorted music');
-													tags_for_mole_holes_collected++;
-												}
-												else
-												{
-													if (current_mole.tags.indexOf(data.toptags.tag[0].name) == -1)
-													current_mole.tags.push(data.toptags.tag[0].name);
-													tags_for_mole_holes_collected++;
-												}
-											}				
-										}, 
-										error: function(code, message) {
-											//console.log("Error");
-										}
-									});
-								artist_index++;
-								}, timeout);
-								mole_hole_index++;
+								// }
+								
+								// current_mole = mole_holes[mole_hole_index];
+								// lastfm.artist.getTopTags({
+										// artist: mole_holes[mole_hole_index].artists[artist_index],
+										// autocorrect: 1
+										// }, {
+										// success: function(data) {						
+											// // If exists
+											// if(data.toptags.tag === undefined)
+											// {
+												// if (current_mole.tags.indexOf('Unsorted music') == -1)
+												// current_mole.tags.push('Unsorted music');
+												// tags_for_mole_holes_collected++;
+												// hole_artist_index_number++;
+											// }
+											// else
+											// {
+												// if(data.toptags.tag[0] === undefined)
+												// {
+													// if (current_mole.tags.indexOf('Unsorted music') == -1)
+													// current_mole.tags.push('Unsorted music');
+													// tags_for_mole_holes_collected++;
+													// hole_artist_index_number++;
+												// }
+												// else
+												// {
+													// if (current_mole.tags.indexOf(data.toptags.tag[0].name) == -1)
+													// current_mole.tags.push(data.toptags.tag[0].name);
+													// tags_for_mole_holes_collected++;
+													// hole_artist_index_number++;
+												// }
+											// }				
+										// }, 
+										// error: function(code, message) {
+											// //console.log("Error");
+										// }
+									// });
+								// artist_index++;
+								// artist_index_number++;
+								// }, timeout);
+								//if (stop = 0)
+								//{
+									getMoleHoleTags(mole_holes[mole_hole_index]);
+									mole_hole_index++;
+								//}
 							}, timeout);
 							//return;
 						}
@@ -185,6 +202,69 @@ function getAlbumsCallback(albums)
 	//console.log(mole_holes);
 }
 
+function getMoleHolesTags()
+{
+	
+}
+
+function getMoleHoleTags(an_mole_hole)
+{
+	var artist_index = 0;
+	var hole_artist_index_number = 0;
+	var halt = 0;
+	var m = setInterval(function() {
+	if (an_mole_hole.artists[artist_index] === undefined) {
+		halt = 1;
+		clearInterval(m);
+		console.log("hole_artist_index_number " + hole_artist_index_number);
+		if (hole_artist_index_number == artist_index)
+		{
+			console.log("Tags were found for mole " + an_mole_hole.name);
+			return;
+		}
+	}
+	
+	current_mole = an_mole_hole;
+	lastfm.artist.getTopTags({
+			artist: an_mole_hole.artists[artist_index],
+			autocorrect: 1
+			}, {
+			success: function(data) {						
+				// If exists
+				if(data.toptags.tag === undefined)
+				{
+					if (current_mole.tags.indexOf('Unsorted music') == -1)
+					current_mole.tags.push('Unsorted music');
+					tags_for_mole_holes_collected++;
+					hole_artist_index_number++;
+				}
+				else
+				{
+					if(data.toptags.tag[0] === undefined)
+					{
+						if (current_mole.tags.indexOf('Unsorted music') == -1)
+						current_mole.tags.push('Unsorted music');
+						tags_for_mole_holes_collected++;
+						hole_artist_index_number++;
+					}
+					else
+					{
+						if (current_mole.tags.indexOf(data.toptags.tag[0].name) == -1)
+						current_mole.tags.push(data.toptags.tag[0].name);
+						tags_for_mole_holes_collected++;
+						hole_artist_index_number++;
+					}
+				}				
+			}, 
+			error: function(code, message) {
+				//console.log("Error");
+			}
+		});
+	artist_index++;
+	artist_index_number++;
+	}, timeout);
+}
+
 function getAudioCallback(audio)
 {
 	if (audio.error) {
@@ -198,9 +278,9 @@ function getAudioCallback(audio)
 	var album_audios = audio.response;
 	
 	var album_audio_index = 0;
-	var m = setInterval(function() {
+	var x = setInterval(function() {
 		if (album_audios[album_audio_index] === undefined) {
-			clearInterval(m);
+			clearInterval(x);
 			mole_holes.push(mole_hole_last);
 			albums_with_mole_holes_collected++;
 			//console.log(mole_holes);
@@ -219,15 +299,6 @@ function getPreferedMoleHole(new_track, cb)
 {
 	console.log('Getting prefered mole hole');
 	var new_track_tag = '';
-/* Create a cache object */
-	var cache = new LastFMCache();
-
-	/* Create a LastFM object */
-	var lastfm = new LastFM({
-		apiKey    : '92e516231d0d7a0aa55790b8c2039830',
-		apiSecret : 'c5661bb7c32ebea64395bd74fc41c795',
-		cache     : cache
-	});
 	
 	/* Looking for new_track tags. */
 	lastfm.artist.getTopTags({
